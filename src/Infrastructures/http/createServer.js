@@ -5,8 +5,8 @@ const DomainErrorTranslator = require("../../Commons/exceptions/DomainErrorTrans
 const users = require("../../Interfaces/http/api/users");
 const authentications = require("../../Interfaces/http/api/authentications");
 const threads = require("../../Interfaces/http/api/threads");
-const comments = require("../../Interfaces/http/api/comments"); // ⬅️ baru
-const replies = require("../../Interfaces/http/api/replies"); // ⬅️ baru
+const comments = require("../../Interfaces/http/api/comments");
+const replies = require("../../Interfaces/http/api/replies");
 
 const Jwt = require("@hapi/jwt");
 
@@ -38,8 +38,8 @@ const createServer = async (container) => {
     { plugin: users, options: { container } },
     { plugin: authentications, options: { container } },
     { plugin: threads, options: { container } },
-    { plugin: comments, options: { container } }, // ⬅️ baru
-    { plugin: replies, options: { container } }, // ⬅️ baru
+    { plugin: comments, options: { container } }, // new
+    { plugin: replies, options: { container } }, // new
   ]);
 
   server.ext("onPreResponse", (request, h) => {
