@@ -1,0 +1,159 @@
+{
+  "info": {
+    "name": "Forum API E2E (Minimal)",
+    "_postman_id": "6c7b6a9a-0c59-4f9f-9b0e-123456789abc",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01 - Register User",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "if (!pm.environment.get('username')) {",
+              "  pm.environment.set('username', 'user_' + Date.now());",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('status 201', () => pm.response.code === 201);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": { "raw": "{{baseUrl}}/users", "host": ["{{baseUrl}}"], "path": ["users"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"secret\",\n  \"fullname\": \"Dicoding Indonesia\"\n}"
+        }
+      }
+    },
+    {
+      "name": "02 - Login (get tokens)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('status 201', () => pm.response.code === 201);",
+              "const json = pm.response.json();",
+              "pm.environment.set('accessToken', json.data.accessToken);",
+              "pm.environment.set('refreshToken', json.data.refreshToken);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/authentications", "host": ["{{baseUrl}}"], "path": ["authentications"] },
+        "body": { "mode": "raw", "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"secret\"\n}" }
+      }
+    },
+    {
+      "name": "03 - Add Thread",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('status 201', () => pm.response.code === 201);",
+              "const json = pm.response.json();",
+              "pm.environment.set('threadId', json.data.addedThread.id);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": { "raw": "{{baseUrl}}/threads", "host": ["{{baseUrl}}"], "path": ["threads"] },
+        "body": { "mode": "raw", "raw": "{\n  \"title\": \"sebuah thread\",\n  \"body\": \"sebuah body thread\"\n}" }
+      }
+    },
+    {
+      "name": "04 - Add Comment",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('status 201', () => pm.response.code === 201);",
+              "const json = pm.response.json();",
+              "pm.environment.set('commentId', json.data.addedComment.id);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/threads/{{threadId}}/comments",
+          "host": ["{{baseUrl}}"], "path": ["threads","{{threadId}}","comments"]
+        },
+        "body": { "mode": "raw", "raw": "{\n  \"content\": \"sebuah comment\"\n}" }
+      }
+    },
+    {
+      "name": "05 - Delete Comment (soft delete)",
+      "event": [
+        { "listen": "test", "script": { "exec": ["pm.test('status 200', () => pm.response.code === 200);"], "type": "text/javascript" } }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+        "url": {
+          "raw": "{{baseUrl}}/threads/{{threadId}}/comments/{{commentId}}",
+          "host": ["{{baseUrl}}"], "path": ["threads","{{threadId}}","comments","{{commentId}}"]
+        }
+      }
+    },
+    {
+      "name": "06 - Get Thread Detail (comment is deleted text)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('status 200', () => pm.response.code === 200);",
+              "const json = pm.response.json();",
+              "pm.test('has comments', () => Array.isArray(json.data.thread.comments) && json.data.thread.comments.length > 0);",
+              "pm.test('deleted marker shown', () => json.data.thread.comments[0].content === \"**komentar telah dihapus**\");"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/threads/{{threadId}}",
+          "host": ["{{baseUrl}}"], "path": ["threads","{{threadId}}"]
+        }
+      }
+    }
+  ]
+}
