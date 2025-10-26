@@ -1,0 +1,30 @@
+name: Continuous Deployment
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy via SSH (pull, install, migrate, pm2 reload)
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host:     ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key:      ${{ secrets.SSH_KEY }}
+          script: |
+            set -e
+            cd ${{ secrets.APP_DIR }}
+            if [ ! -d ".git" ]; then
+              git clone https://github.com/Farhniqratama/forum-api.git .
+            fi
+            git fetch origin
+            git reset --hard origin/main
+            npm ci --omit=dev
+            npm run migrate
+            pm2 startOrReload ecosystem.config.js || pm2 start src/app.js --name forum-api
+            pm2 save
